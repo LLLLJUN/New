@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.CheckDetailDao">
+	<insert id="insertCheckDetailList" parameterType="java.util.List">
+		insert into ws_check_detail(sku,color,size,planNum,checkBillCode)
+		values
+		<foreach collection="checkDetailList" item="checkDetail" separator=",">
+			(
+				#{checkDetail.sku},
+				#{checkDetail.color},
+				#{checkDetail.size},
+				#{checkDetail.planNum},
+				#{checkDetail.checkBillCode}
+			)
+		</foreach>
+	</insert>
+	
+	<update id="updateCheck" parameterType="java.util.List">
+		<foreach collection="checkDetailList" item="checkDetail" separator=";">
+				update ws_check_detail set 
+				color=#{checkDetail.color},
+				size=#{checkDetail.size},
+				realNum=#{checkDetail.realNum} 
+				where checkBillCode=#{checkDetail.checkBillCode} and sku=#{checkDetail.sku}
+		</foreach>
+	</update>
+</mapper>

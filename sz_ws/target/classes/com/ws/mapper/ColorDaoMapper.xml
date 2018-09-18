@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.ColorDao">
+	<insert id="insertColor" parameterType="color">
+		insert into ws_color(color,colorName) values(#{color},#{colorName}) 
+	</insert>
+	
+	<select id="selectTotalColor" resultType="map">
+		select color,colorName from ws_color 
+	</select>
+	
+	<select id="selectByColor" parameterType="java.lang.String" resultType="java.lang.String">
+		select colorName from ws_color where color=#{color}
+	</select>
+	
+	<select id="selectColorExsit" resultType="int" parameterType="java.lang.String">
+		select count(1) from ws_color where color=#{colorCode}
+	</select>
+</mapper>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.InStoreDetailDao">
+	<insert id="insertInStoreDetailList" parameterType="java.util.List">
+		insert into ws_in_store_detail(inStoreCode,sku,color,size,purchasePrice,inStoreNum)
+             values
+             <foreach collection="inStoreDetailList" item="inStoreDetail" separator=",">
+             	(
+	             	#{inStoreDetail.inStoreCode},
+	             	#{inStoreDetail.sku},
+	             	#{inStoreDetail.color},
+	             	#{inStoreDetail.size},
+	             	#{inStoreDetail.purchasePrice},
+	             	#{inStoreDetail.inStoreNum}
+	             )
+             </foreach>
+	</insert>
+	
+	<select id="selectInStoreNum" parameterType="java.lang.String" resultType="map">
+		SELECT inStoreNum from ws_in_store_detail d LEFT JOIN ws_in_store s on s.inStoreCode=d.inStoreCode where s.purchaseCode=#{purchaseCode}
+	</select>
+</mapper>

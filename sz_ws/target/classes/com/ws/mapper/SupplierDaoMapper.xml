@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.SupplierDao">
+	<insert id="insertSupplier" parameterType="Supplier">
+		insert into ws_supplier(supplierCode,supplierName,supplierMan,supplierTel,supplierMail,supplierAddress,createTime) 
+			values(#{supplierCode},#{supplierName},#{supplierMan},#{supplierTel},#{supplierMail},#{supplierAddress},now())
+	</insert>
+	
+	<delete id="deleteBySupplierCode" parameterType="java.lang.String">
+		delete from ws_supplier where supplierCode=#{supplierCode} 
+	</delete>
+	
+	<update id="updateSupplier" parameterType="Supplier"> 
+		update ws_supplier set supplierName=#{supplierName},supplierMan=#{supplierMan},supplierTel=#{supplierTel},supplierMail=#{supplierMail},supplierAddress=#{supplierAddress} where supplierCode=#{supplierCode}
+	</update>
+	
+	<select id="selectBySupplierCode" parameterType="java.lang.String" resultType="map">
+		select supplierCode,supplierName,supplierMan,supplierTel,supplierMail,supplierAddress from ws_supplier where supplierCode=#{supplierCode}
+	</select>
+	
+	<select id="selectCount" resultType="int">
+		select count(*) from ws_supplier
+	</select>
+	
+	<select id="selectAllSupplier" parameterType="Page" resultType="map">
+		select * from ws_supplier limit #{startRow},#{rows}
+	</select>
+	
+</mapper>

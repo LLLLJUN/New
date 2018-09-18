@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.GoodsTransferDao">
+	<resultMap type="map" id="result">
+		<id property="id" column="id"/>
+		<result property="transferCode" column="transferCode"/>
+		<result property="goodsAllNum" column="goodsAllNum"/>
+		<result property="goodsTotalPrices" column="goodsTotalPrices"/>
+		<result property="outStoreState" column="outStoreState"/>
+		<result property="inStoreState" column="inStoreState"/>
+		<result property="sendStoreCode" column="sendStoreCode"/>
+		<result property="sendStoreName" column="sendStoreName"/>
+		<result property="warehouse" column="warehouse"/>
+		<result property="receiveStoreCode" column="receiveStoreCode"/>
+		<result property="receiveStoreName" column="receiveStoreName"/>
+		<result property="userName" column="userName"/>
+		<result property="remark" column="remark"/>
+		<result property="createTime" column="createTime"/>
+		<association property="goodsInfos" column="transferCode" select="selectGoodsTransferDetail"></association>
+	</resultMap>
+
+	<insert id="insertGoodsTransfer" parameterType="GoodsTransfer">
+		insert into ws_goods_transfer(transferCode,goodsAllNum,goodsTotalPrices,outStoreState,inStoreState,sendStoreCode,sendStoreName,warehouse,receiveStoreCode,receiveStoreName,userName,remark,createTime) 
+		values(#{transferCode},#{goodsAllNum},#{goodsTotalPrices},#{outStoreState},#{inStoreState},#{sendStoreCode},#{sendStoreName},#{warehouse},#{receiveStoreCode},#{receiveStoreName},#{userName},#{remark},now())
+	</insert>
+	
+	<delete id="deleteGoodsTransfer" parameterType="java.lang.String"> 
+		delete from ws_goods_transfer where transferCode=#{transferCode}
+	</delete>
+	
+	<select id="selectByTransferCode" resultMap="result" parameterType="java.lang.String">
+		select transferCode,goodsAllNum,goodsTotalPrices,outStoreState,inStoreState,sendStoreCode,sendStoreName,warehouse,receiveStoreCode,receiveStoreName,userName,remark,createTime  from ws_goods_transfer where transferCode=#{transferCode}
+	</select>
+	
+	<select id="selectGoodsTransferDetail" resultType="map" parameterType="java.lang.String">
+		select d.sku,c.colorName,s.sizeName,d.purchasePrice,transferNum,g.style,g.name,g.unit 
+		from ws_goods_transfer_detail d 
+		left join ws_goods g on d.sku=g.sku 
+		left join ws_color c on d.color=c.color
+		left join ws_size s on d.size=s.size
+		where transferCode=#{transferCode}
+	</select>
+	
+	<select id="selectGoodsTransferList" resultType="map" parameterType="Page">
+		select transferCode,createTime,outStoreState,goodsAllNum,goodsTotalPrices,receiveStoreName,warehouse where storeCode=#{condition.storeCode} limit #{startRow},#{rows}
+	</select>
+	
+	<select id="selectAllCount" parameterType="Condition" resultType="int">
+		select count(1) from ws_goods_transfer where storeCode=#{Condition.storeCode}
+	</select>
+</mapper>

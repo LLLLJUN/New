@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.SaleDao">
+	<select id="selectGoodsPriceInfo" parameterType="java.lang.String" resultType="map" >
+		select sku,name,style,listPrice,curPrice from ws_goods where sku=#{sku} 
+	</select>
+	
+	<insert id="insertSale" parameterType="Sale" >
+		insert into ws_sale(saleBillNo,storeCode,userCode,userName,totalNum,totalPrice,remark,saleTime) 
+		values(#{saleBillNo},#{storeCode},#{userCode},#{userName},#{totalNum},#{totalPrice},#{remark},now())
+	</insert>
+	
+	<insert id="insertSaleList" parameterType="java.util.List">
+		insert into ws_sale(saleBillNo,storeCode,userCode,userName,totalNum,totalPrice,remark,saleTime)
+		values
+		<foreach collection="saleList" item="sale" separator=",">
+			(
+				#{sale.saleBillNo},#{sale.storeCode},#{sale.userCode},#{sale.userName},#{sale.totalNum},#{sale.totalPrice},#{sale.remark},#{sale.saleTime}
+			)
+		</foreach>
+	</insert>
+	
+	<select id="selectByTimeSaleInfo" parameterType="condition" resultType="map">
+		select saleBillNo,storeCode,userCode,userName,totalNum,totalPrice,saleTime  from ws_sale where storeCode=#{storeCode} and saleTime >=#{startDate} and saleTime <![CDATA[< ]]>#{endDate}
+	</select>
+	
+	<select id="selectByTimeGetSalesVolume" parameterType="Sale" resultType="map">
+		select st.storeName, sum(totalNum) as saleNum,SUM(totalPrice)as salePrice 
+		from ws_sale sa 
+		LEFT JOIN ws_stores st on sa.storeCode=st.storeCode 
+		<where>
+			<if test="saleTime=='day'.toString()">
+				to_days(sa.saleTime) = to_days(now())
+			</if>
+			<if test="saleTime=='week'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 7 DAY) <![CDATA[<]]>= sa.saleTime
+			</if>
+			<if test="saleTime=='month'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 30 DAY) <![CDATA[<]]>= sa.saleTime
+			</if>
+			<if test="saleTime=='quarter'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 90 DAY) <![CDATA[<]]>= sa.saleTime
+			</if>
+			<if test="saleTime=='year'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 365 DAY) <![CDATA[<]]>= sa.saleTime
+			</if>
+				GROUP BY sa.storeCode 
+		</where>
+	</select>
+</mapper>

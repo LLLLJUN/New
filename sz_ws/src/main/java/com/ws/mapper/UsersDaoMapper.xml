@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.UsersDao">
+	<resultMap type="map" id="result">
+		<id property="id" column="id"/>
+		<result property="userName" column="userName"/>
+		<result property="userCode" column="userCode"/>
+		<result property="userPsw" column="userPsw"/>
+		<result property="userRole" column="userRole"/>
+		<result property="userMail" column="userMail"/>
+		<result property="userTel" column="userTel"/>
+		<result property="storeCode" column="storeCode"/>
+		<result property="createTime" column="createTime"/>
+		<association property="stores" column="storeCode" select="selectByStoreCode"/>
+	</resultMap>
+
+	<select id="selectLogin" parameterType="Users" resultType="map">
+		select r.role,u.storeCode,u.userName,s.storeName from ws_users u ,ws_role r,ws_stores s WHERE u.userRole=r.id and s.storeCode=u.storeCode and userCode=#{userCode} and userPsw=#{userPsw} limit 1
+	</select>
+	
+	<select id="selectByStoreCode" parameterType="java.lang.String" resultType="map">
+		select storeName from ws_stores where storeCode=#{storeCode}
+	</select>
+	
+	<select id="selectByUsersCode" resultType="Users" parameterType="java.lang.String">
+		select userCode,userPsw from ws_users where userCode=#{userCode} 
+	</select>
+	
+	<select id="selectByUsersCodeInfo" resultType="map" parameterType="java.lang.String">
+		select u.userCode,u.userPsw,u.userName,r.userRoleName,u.userMail,u.userTel,s.storeName from ws_users u
+		left join ws_role r on r.id=u.userRole
+		left join ws_stores s on s.storeCode=u.storeCode
+		where userCode=#{userCode} 
+	</select>
+	
+	<insert id="insertUser" parameterType="users">
+		insert into ws_users(userName,userCode,userPsw,userRole,userMail,userTel,storeCode,createTime) 
+		values(#{userName},#{userCode},#{userPsw},#{userRole},#{userMail},#{userTel},#{storeCode},now())
+	</insert>
+	
+	<update id="updateUsers" parameterType="users">
+		update ws_users set userName=#{userName},userRole=#{userRole},userMail=#{userMail},userTel=#{userTel},storeCode=#{storeCode} where userCode=#{userCode}
+	</update>
+	
+	<delete id="deleteUsers" parameterType="java.lang.String">
+		delete from ws_users where userCode=#{userCode}
+	</delete>
+	
+	<select id="selectCount" parameterType="Condition" resultType="int">
+		select count(1) from ws_users 
+		<where>
+			<if test="storeCode!=null and storeCode!=''">
+				storeCode=#{storeCode}
+			</if>
+			<if test="userCode!=null and userCode!=''">
+				userCode=#{userCode}
+			</if>
+			<if test="userRole>0">
+				userRole=#{userRole}
+			</if>
+		</where>
+		
+	</select>
+	
+	<select id="selectUserList" parameterType="Page" resultType="map">
+		select u.userName,u.userCode,u.userTel,u.userMail,r.userRoleName,s.storeName,u.createTime 
+		from ws_users u 
+		left join ws_stores s on u.storeCode=s.storeCode 
+		left join ws_role r on u.userRole=r.id
+		<where>
+			<if test="condition.storeCode!=null and condition.storeCode!=''">
+				u.storeCode=#{condition.storeCode}
+			</if>
+			<if test="condition.userCode!=null and condition.userCode!=''">
+				u.userCode=#{condition.userCode}
+			</if>
+			<if test="condition.userRole>0">
+				u.userRole=#{condition.userRole}
+			</if>
+		</where>
+		order by u.createTime desc limit #{startRow},#{rows}
+	</select>
+</mapper>

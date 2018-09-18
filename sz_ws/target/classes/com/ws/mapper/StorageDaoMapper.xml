@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.StorageDao">
+	<insert id="insertStorage" parameterType="Storage" >
+		insert into ws_storage(sku,color,size,storeCode,num) values
+		<foreach collection="storageList" item="storage" separator=",">
+			(#{storage.sku},#{storage.color},#{storage.size},#{storage.storeCode},#{storage.num})
+		</foreach>
+	</insert>
+	
+	<select id="selectAllStorage" parameterType="java.lang.String" resultType="map">
+		select s.color,s.size,s.num,s.sku,g.name,g.style,g.unit 
+		from ws_storage s 
+		left join ws_goods g on s.sku=g.sku 
+		where storeCode=#{storeCode}
+	</select>
+	
+</mapper>

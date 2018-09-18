@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.AdvertisingDao">
+	<resultMap type="adVertising" id="all">
+		<id property="id" column="id"></id>
+		<result property="adVersion" column="adVersion"/>
+		<result property="adUrl" column="adUrl"/>
+		<result property="adCreateDate" column="adCreateDate"/>
+	</resultMap>
+	
+	<resultMap type="adVertising" id="allUrl">
+		<id property="id" column="id"/>
+		<result property="adUrl" column="adUrl"/>
+	</resultMap>
+	
+	<insert id="insertImg" parameterType="adVertising">
+		insert into ts_ad(adVersion,adUrl,adCreateDate) values(#{adVersion},#{adUrl},now())
+	</insert>
+	
+	<update id="updateImg" parameterType="adVertising">
+		update ts_ad set adVersion=#{adVersion},adUrl=#{adUrl} where id=#{id}
+	</update>
+	
+	<select id="selectImg" parameterType="int" resultMap="all">
+		select * from ts_ad where adVersion=#{adVersion}
+	</select>
+	
+	<select id="selectAllImg" resultMap="all">
+		select * from ts_ad 
+	</select>
+	
+	<select id="selectById" parameterType="int" resultType="advertising">
+		select * from ts_ad where id=#{id} 
+	</select>
+	
+	<select id="selectCount" resultType="advertising">
+		select * from ts_ad where adVersion=(select max(adVersion) from ts_ad)
+	</select>
+	
+	<select id="selectAllUrl" resultType="String" parameterType="int">
+		select group_concat(adUrl) from ts_ad where adVersion=#{version}
+	</select>
+</mapper>

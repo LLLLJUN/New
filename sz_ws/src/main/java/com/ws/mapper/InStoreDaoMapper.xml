@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.InStoreDao">
+
+	<resultMap type="map" id="result">
+		<id column="id" property="id"/>
+		<result column="inStoreCode" property="inStoreCode"/>
+		<result column="purchaseCode" property="purchaseCode"/>
+		<result column="userName" property="userName"/>
+		<result column="createTime" property="createTime"/>
+		<result column="remark" property="remark"/>
+		<result column="storeCode" property="storeCode"/>
+		<result column="warehouse" property="warehouse"/>
+		<result column="supplierCode" property="supplierCode"/>
+		<result column="goodsTotalPrices" property="goodsTotalPrices"/>
+		<result column="GoodsAllNum" property="GoodsAllNum"/>
+		<association property="goodsInfos" select="selectInStoreDetail" column="inStoreCode"></association>
+	</resultMap>
+	<select id="selectByPurchaseCodeYesInStore" parameterType="java.lang.String" resultMap="result">
+		select w.inStoreCode,w.purchaseCode,w.userName,w.supplierCode,w.remark,w.storeCode,w.warehouse,w.goodsTotalPrices,w.goodsAllNum,s.supplierName from ws_in_store w 
+		left join ws_supplier s
+		on w.supplierCode=s.supplierCode
+		where inStoreCode=#{inStoreCode}
+	</select>
+	<insert id="insertInStore" parameterType="InStore">
+		insert into ws_in_store(inStoreCode,purchaseCode,userName,createTime,remark,storeCode,warehouse,supplierCode,goodsTotalPrices,goodsAllNum)
+				values(#{inStoreCode},#{purchaseCode},#{userName},now(),#{remark},#{storeCode},#{warehouse},#{supplierCode},#{goodsTotalPrices},#{goodsAllNum})
+	</insert>
+	
+	<select id="selectAllCount" parameterType="Condition" resultType="int">
+		select count(1) from ws_purchase where storeCode=#{storeCode} and inStoreState<![CDATA[<]]>2
+	</select>
+	
+	<select id="selectNoInStoreList" parameterType="Page" resultType="map">
+		select p.purchaseCode,p.createTime,p.inStoreState,p.warehouse,s.supplierName,
+		case when (p.goodsAllNum-(SELECT sum(goodsAllNum) from ws_in_store where purchaseCode=p.purchaseCode group by purchaseCode)) is null then p.goodsAllNum 
+		else (p.goodsAllNum-(SELECT sum(goodsAllNum) from ws_in_store where purchaseCode=p.purchaseCode group by purchaseCode)) end  as goodsAllNum
+		from ws_purchase p 
+		left join ws_supplier s 
+		on p.supplierCode=s.supplierCode 
+		where storeCode=#{condition.storeCode} and inStoreState<![CDATA[<]]>2  
+		limit #{startRow},#{rows}
+	</select>
+	
+	<select id="selectAllYesCount" parameterType="Condition" resultType="int">
+		select count(1) from ws_in_store where storeCode=#{storeCode} 
+	</select>
+	
+	<select id="selectYesInStoreList" parameterType="Page" resultType="map">
+		select st.inStoreCode,st.purchaseCode,st.createTime,st.goodsAllNum,st.warehouse,s.supplierName from ws_in_store st left join ws_supplier s on st.supplierCode=s.supplierCode where st.storeCode=#{condition.storeCode} limit #{startRow},#{rows}
+	</select>
+	
+	<select id="selectInStoreDetail" parameterType="java.lang.String" resultType="map">
+		select d.inStoreCode,d.sku,d.color,d.size,d.purchasePrice,d.inStoreNum,g.name,g.style,g.unit 
+		from ws_in_store_detail d 
+		left join ws_goods g on d.sku=g.sku  
+		where inStoreCode=#{inStoreCode}
+	</select>
+	
+	<select id="selectInSotoreGoodsAllNum" parameterType="java.lang.String" resultType="int">
+		select sum(goodsAllNum)as goodsAllNum from ws_in_store where purchaseCode=#{purchaseCode}
+	</select>
+</mapper>

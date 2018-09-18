@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.EpcStyleDao">
+	<resultMap type="map" id="result">
+		<id property="id" column="id"/>
+		<result property="epc" column="epc"/>
+		<result property="style" column="style"/>
+		<result property="createTime" column="createTime"/>
+		<association property="goodsInfo" column="style" select="selectGoodInfo"></association>
+		<association property="matchInfo" column="style"  select="selectStyleMatchList"></association>
+		<association property="info" column="style"  select="selectStyleInfo"></association>
+		<association property="imgURL" column="style"  select="selectStyleImgList"></association>
+	</resultMap>
+	
+	<resultMap type="map" id="resultMatchStyle">
+		<id property="id" column="id"/>
+		<result property="epc" column="epc"/>
+		<result property="style" column="style"/>
+		<result property="createTime" column="createTime"/>
+		<association property="goodsInfo" column="style" select="selectGoodInfo"></association>
+		<association property="info" column="style"  select="selectStyleInfo"></association>
+		<association property="imgURL" column="style"  select="selectStyleImgList"></association>
+	</resultMap>
+	
+	<select id="selectByEpc" parameterType="java.lang.String" resultMap="result">
+		select t.style  from ts_epc_style t where t.epc=#{epc}
+	</select>
+	
+	<select id="selectStyleMatchList" parameterType="java.lang.String" resultType="map">
+		select t.matchStyle,t.matchUrl  from ts_style_match t where t.style =#{style}
+	</select>
+	
+	<select id="selectGoodInfo" parameterType="java.lang.String" resultType="map">
+		select t.name,t.listPrice,t.curPrice,t.colors,t.sizes,t.onlineUrl from ts_goods_info t where t.style=#{style}
+	</select>
+	
+	<select id="selectStyleInfo" parameterType="java.lang.String" resultType="map">
+		select t.info from ts_style_info t where t.style=#{style}
+	</select>
+	
+	<select id="selectStyleImgList" parameterType="java.lang.String" resultType="map">
+		select t.url from ts_style_img t where t.style=#{style}
+	</select>
+	
+	<select id="selectByMatchStyle" parameterType="java.lang.String" resultMap="resultMatchStyle">
+		select t.style from ts_epc_style t where t.style=#{matchStyle}
+	</select>
+</mapper>

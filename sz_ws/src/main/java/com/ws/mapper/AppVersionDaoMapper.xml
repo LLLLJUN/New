@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.AppVersionDao">
+	<select id="selectAppVersion" resultType="appVersion">
+		select appUrl,versionName,appCreateDate,messages,versionCode from ws_app_version where versionCode=(select max(versionCode) from ws_app_version) LIMIT 1
+	</select>
+</mapper>

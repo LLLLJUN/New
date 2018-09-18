@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:soap="http://cxf.apache.org/bindings/soap"
+	xmlns:jaxws="http://cxf.apache.org/jaxws"
+	xsi:schemaLocation="http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.1.xsd
+		http://cxf.apache.org/bindings/soap http://cxf.apache.org/schemas/configuration/soap.xsd">
+		<!--1:配置DI注解解析器-->
+		<context:annotation-config/>
+		<!--开启spring注解扫描，spring 可以自动去扫描 base-package下面的包或子包下面的Java文件，如果扫描到有Spring的相关
+			注解的类，则把这些类注册为Spring的bean-->
+		<context:component-scan base-package="com.ws"></context:component-scan>
+		<!-- 引入properties配置文件  -->
+		<bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">  
+		    <property name="locations">  
+		        <list>  
+		           <value>classpath:redis.properties</value>
+		           <value>classpath:jdbc.properties</value>  
+		            <!--要是有多个配置文件，只需在这里继续添加即可 -->  
+		        </list>  
+		    </property>  
+		</bean>
+		<!-- redis服务器中心 --> 
+		<!-- jedis 配置 -->
+	    <!-- 连接池配置 ${redis.maxTotal} -->
+	    <bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig">
+			<!-- 最大连接数 -->
+			<property name="maxTotal" value="${redis.maxTotal}" />
+			<!-- 最大空闲连接数 -->
+			<property name="maxIdle" value="${redis.maxIdle}" />
+			<!-- 每次释放连接的最大数目 -->
+			<property name="numTestsPerEvictionRun" value="${redis.numTestsPerEvictionRun}" />
+			<!-- 释放连接的扫描间隔（毫秒） -->
+			<property name="timeBetweenEvictionRunsMillis" value="${redis.timeBetweenEvictionRunsMillis}" />
+			<!-- 连接最小空闲时间 -->
+			<property name="minEvictableIdleTimeMillis" value="${redis.minEvictableIdleTimeMillis}" />
+			<!-- 连接空闲多久后释放, 当空闲时间>该值 且 空闲连接>最大空闲连接数 时直接释放 -->
+			<property name="softMinEvictableIdleTimeMillis" value="${redis.softMinEvictableIdleTimeMillis}" />
+			<!-- 获取连接时的最大等待毫秒数,小于零:阻塞不确定的时间,默认-1 -->
+			<property name="maxWaitMillis" value="${redis.maxWait}" />
+			<!-- 在获取连接的时候检查有效性, 默认false -->
+			<property name="testOnBorrow" value="${redis.testOnBorrow}" />
+			<!-- 在空闲时检查有效性, 默认false -->
+			<property name="testWhileIdle" value="${redis.testWhileIdle}" />
+			<!-- 连接耗尽时是否阻塞, false报异常,ture阻塞直到超时, 默认true -->
+			<property name="blockWhenExhausted" value="${redis.blockWhenExhausted}" />
+		</bean>
+		<!-- redis单节点数据库连接配置 
+		<bean class="org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration">
+		    <property name="maxInactiveIntervalInSeconds" value="1800000" />
+		</bean>
+		-->
+		<bean id="connectionFactory"  class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory" >  
+	         <property name="poolConfig" ref="poolConfig" />  
+	         <property name="port" value="${redis.port}" />  
+	         <property name="hostName" value="${redis.host}" />  
+	         <property name="password" value="${redis.password}" />  
+	         <property name="timeout" value="${redis.timeout}" ></property>  
+	   </bean>  
+	   <!-- 
+	   	redisTemplate配置，redisTemplate是对Jedis的对redis操作的扩展，有更多的操作，封装使操作更便捷
+	   	spring-data-redis：默认采用的序列化策略有两种，一种是String的序列化策略，一种是JDK的序列化策略
+	   	1.String序列化：String.getByte()
+	   	2.JDK序列化是只jdk自带序列化
+	   	为了数据一致性配置key、vaule统一使用String序列化策略
+	    -->
+	    
+	   <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate" >
+	          <property name="connectionFactory" ref="connectionFactory" />
+	          <property name="keySerializer" >
+	              <bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+	          </property>
+	          <property name="valueSerializer" >
+	              <bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+	          </property>
+	   </bean >
+		
+		
+		
+		<!--自动注册RequestMappingHandlerMapping与RequestMappingHandlerAdapter两个Bean,这是Spring MVC为@Controller分发请求所必需的，并且提供了数据绑定支持，@NumberFormatannotation支持，@DateTimeFormat支持,@Valid支持读写XML的支持（JAXB）和读写JSON的支持（默认Jackson）等功能-->
+		<mvc:annotation-driven validator="validator"/>
+		<!-- 配置验证规则 -->
+	<bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">  
+        <property name="providerClass" value="org.hibernate.validator.HibernateValidator" />  
+        <property name="validationMessageSource" ref="messageSource" />  
+    </bean>  
+	<!-- 校验错误信息配置文件 -->
+	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">  
+        <property name="basenames">  
+            <list>  
+                <value>classpath:validatorErrorMessage</value>  
+                <value>classpath:org/hibernate/validator/ValidationMessages</value>  
+            </list>  
+        </property>  
+        <property name="useCodeAsDefaultMessage" value="false" />  
+        <property name="defaultEncoding" value="UTF-8" />  
+        <property name="cacheSeconds" value="120" />  
+    </bean> 
+		
+		<!--使用默认的Servlet来响应静态文件-->
+		<mvc:default-servlet-handler />
+		
+		<!--配置视图解析器  -->
+		<bean id="resourceViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+			<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+			<property name="prefix" value="/WEB-INF/views/"></property><!-- 前缀 -->
+			<property name="suffix" value=".jsp"></property><!--后缀  -->
+		</bean>
+		
+		<!--配置图片视图解析器  -->
+		<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+			<property name="defaultEncoding" value="utf-8"></property><!--解决图片名字中文乱码  -->
+			<property name="maxUploadSize" value="1000000"></property><!--上传文件最大字节  -->
+		</bean>
+    	
+		<!-- 引入swagger相关 -->
+	    <import resource="classpath:spring-swagger.xml"/>
+	    
+		<!--shiro配置-->
+	    
+	    <!--配置数据源c3p0  -->
+		<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+			<property name="user" value="${jdbc.username}"></property>
+			<property name="password" value="${jdbc.password}"></property>
+			<property name="jdbcUrl" value="${jdbc.url}"></property>
+			<property name="driverClass" value="${jdbc.driverclassName}"></property>
+			<!--初始化连接  -->
+			<property name="initialPoolSize" value="${jdbc.initialPoolSize}"/>
+			<!--连接池中最大连接数  -->
+			<property name="maxPoolSize" value="${jdbc.maxPoolSize}"></property>
+			<!-- 连接池中保留的最小连接数 -->
+			<property name="minPoolSize" value="${jdbc.minPoolSize}"></property>
+			<!--最大空闲时间  -->
+			<property name="maxIdleTime" value="${jdbc.maxIdleTime}" ></property>
+			<!-- 每30分钟检查所有连接池中的空闲连接 -->
+			<property name="idleConnectionTestPeriod" value="${jdbc.idleConnectionTestPeriod}"></property>
+			<!-- 定义在从数据库获取新连接失败后重复尝试的次数。Default: 30 -->
+			<property name="acquireRetryAttempts" value="${jdbc.acquireRetryAttempts}" />
+		</bean>
+		
+		<!--配置数据库连接 sqlSessionFactory -->
+		<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+			<property name="dataSource" ref="dataSource"></property>
+			<property name="configLocation" value="classpath:SqlMapConfig.xml"></property>
+		</bean>
+		
+		<!-- 自动生成接口实现类工具 -->
+		<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+			<!--指明接口包位置  -->
+			<property name="basePackage" value="com.ws.dao"></property>
+			<!--把sqlSessionFactory交给该对象,使用value不要用ref -->
+			<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+		</bean>
+		
+		
+		<!--事务管理  （事务管理切面对象）-->
+		<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+			<!--需要一个参数，数据源  -->
+			<property name="dataSource" ref="dataSource"></property>
+		</bean>
+		
+		<!--配置事务注解 -->
+    	<tx:annotation-driven transaction-manager="transactionManager" />
+		<!--基于配置文件的事务配置  -->
+		<tx:advice id="tranAdvice" transaction-manager="transactionManager"><!--把切面对象管理给配置文件  -->
+			<tx:attributes>
+				<!--事务属性通过这个配置
+	                name是给要加事务的方法的名字，可以根据方法的前几个单词加上*号匹配如add* 直接*号就是匹配全部方法，不写事务属性就是默认的事务属性
+	             -->
+				<tx:method name="insert*" propagation="REQUIRED" timeout="30" isolation="READ_COMMITTED"/>
+				<tx:method name="select*" read-only="true"/>
+				<tx:method name="update*" propagation="REQUIRED" timeout="30" isolation="READ_COMMITTED"/>
+				<tx:method name="delete*" propagation="REQUIRED" timeout="30" isolation="READ_COMMITTED"/>
+			</tx:attributes>
+		</tx:advice>
+		
+		<aop:config>
+			<aop:pointcut expression="execution(* com.ws.service..*.*(..))" id="tranExecution"/>
+			<aop:advisor advice-ref="tranAdvice" pointcut-ref="tranExecution"/>
+		</aop:config>
+	     <!-- Import apache CXF bean definition 固定-->
+        <import resource="classpath:META-INF/cxf/cxf.xml" />
+        <!--<import resource="classpath:META-INF/cxf/cxf-extension-soap.xml" />-->
+        <!--<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />-->
+
+        <!-- services接口配置 -->
+        <bean id="tbContentServiceBean" class="com.ws.service.impl.SaleWebServiceImpl" />
+        <!-- CXF 配置WebServices的服务名及访问地址  address访问地址 -->
+        <jaxws:server id="tbContentService" address="/merchandise" serviceClass="com.ws.service.SaleWebService">
+            <jaxws:serviceBean>
+                <ref bean="tbContentServiceBean"/>
+            </jaxws:serviceBean>
+        </jaxws:server>
+	  	<!--  全局异常处理器 
+		  只要实现HandlerExceptionResolver接口就是全局处理器
+		<bean class="com.ws.util.DefaultExceptionHandler"/> -->
+	    
+
+</beans>

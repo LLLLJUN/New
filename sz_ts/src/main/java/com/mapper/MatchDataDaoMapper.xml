@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.MatchDataDao">
+	<insert id="insertMatchData" parameterType="matchData">
+		INSERT INTO ts_match_data(matchStyle,style,storeCode,createTime,equipment) VALUES (#{matchStyle},#{style},#{storeCode},NOW(),#{equipment})
+	</insert>
+	<select id="selectMatchData" parameterType="matchData" resultType="map">
+		select count(1) as viewNum,matchStyle from ts_match_data 
+		<where>
+			<if test="createTime=='day'.toString()">
+				to_days(createTime) = to_days(now())
+			</if>
+			<if test="createTime=='week'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='month'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 30 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='quarter'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='year'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+			</if>
+			and storeCode=#{storeCode} group by matchStyle
+		</where>
+	</select>
+	
+	<select id="selectTotalStoreMatchData" resultType="map" parameterType="tryOnData">
+		SELECT COUNT(*) as viewNum,s.storeName 
+		from ts_match_data d 
+		LEFT JOIN ts_stores s 
+		on d.storeCode=s.storeCode 
+		<where>
+			<if test="createTime=='day'.toString()">
+				to_days(d.createTime) = to_days(now())
+			</if>
+			<if test="createTime=='week'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 7 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+			<if test="createTime=='month'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 30 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+			<if test="createTime=='quarter'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 90 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+			<if test="createTime=='year'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 365 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+			GROUP BY s.storeName
+		</where>
+	
+	</select>
+	
+	<select id="selectByStoreCodeTotalMatchData" parameterType="matchData" resultType="map">
+		SELECT COUNT(*) as viewNum,matchStyle 
+		from ts_match_data  
+		<where>
+			<if test="createTime=='day'.toString()">
+				to_days(createTime) = to_days(now())
+			</if>
+			<if test="createTime=='week'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='month'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 30 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='quarter'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='year'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+			</if>
+			and storeCode=#{storeCode} GROUP BY matchStyle
+		</where>
+	</select>
+	
+	
+	<insert id="batchInsertMatchData" parameterType="java.util.List">
+		insert into ts_match_data(style,equipment,createTime,matchStyle,storeCode) 
+		values
+		<foreach collection="matchDataList" item="matchData" separator=",">
+			(
+			#{matchData.style},
+			#{matchData.equipment},
+			#{matchData.createTime},
+			#{matchData.matchStyle},
+			#{matchData.storeCode}
+			)
+		</foreach>
+	</insert>
+</mapper>

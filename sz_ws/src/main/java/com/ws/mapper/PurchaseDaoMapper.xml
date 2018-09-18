@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.PurchaseDao">
+
+	<resultMap type="map" id="result">
+		<id property="id" column="id" />
+		<result property="purchaseCode" column="purchaseCode" />
+		<result property="goodsTotalPrices" column="goodsTotalPrices" />
+		<result property="goodsAllNum" column="goodsAllNum" />
+		<result property="supplierCode" column="supplierCode" />
+		<result property="warehouse" column="warehouse" />
+		<result property="storeCode" column="storeCode" />
+		<result property="userName" column="userName" />
+		<result property="remark" column="remark" />
+		<result property="inStoreState" column="inStoreState" />
+		<result property="createTime" column="createTime" />
+		<association property="goodsInfos" column="purchaseCode"
+			select="selectPurchaseDetail"></association>
+	</resultMap>
+
+	<insert id="insertPurchase" parameterType="Purchase">
+		insert into ws_purchase
+		(purchaseCode,goodsTotalPrices,goodsAllNum,supplierCode,warehouse,storeCode,userName,remark,inStoreState,createTime)
+		values
+		(#{purchaseCode},#{goodsTotalPrices},#{goodsAllNum},#{supplierCode},#{warehouse},#{storeCode},#{userName},#{remark},0,now())
+	</insert>
+
+	<delete id="deletePurchase" parameterType="java.lang.String">
+		delete from
+		ws_purchase where purchaseCode=#{purchaseCode} and inStoreState <![CDATA[<]]>1
+	</delete>
+
+	<select id="selectByPurchaseCode" parameterType="java.lang.String"
+		resultMap="result">
+		select p.purchaseCode,p.goodsTotalPrices,p.supplierCode,p.inStoreState 
+		,p.warehouse,p.storeCode,p.userName,p.remark,s.supplierName 
+		from ws_purchase p 
+		left join ws_supplier s 
+		on p.supplierCode=s.supplierCode 
+		where purchaseCode=#{purchaseCode}
+	</select>
+
+	<select id="selectPurchaseDetail" parameterType="java.lang.String"
+		resultType="map">
+		select 
+		ws_purchase_detail.purchaseCode,
+		ws_purchase_detail.sku,
+		ws_purchase_detail.color,
+		ws_purchase_detail.size,
+		ws_purchase_detail.purchaseNum,
+		ws_purchase_detail.purchasePrice,
+		ws_goods.style,
+		ws_goods.`name`,
+		ws_goods.unit
+		from ws_purchase_detail 
+		LEFT JOIN ws_goods
+		on ws_purchase_detail.sku=ws_goods.sku
+		where ws_purchase_detail.purchaseCode=#{purchaseCode}
+	</select>
+	
+	<select id="selectByPurchaseCodeNoInStore" parameterType="java.lang.String" resultType="map">
+		select p.purchaseCode,p.goodsTotalPrices,p.supplierCode,
+		case when (p.goodsAllNum-(SELECT sum(goodsAllNum)from ws_in_store where purchaseCode=p.purchaseCode group by purchaseCode)) is null then p.goodsAllNum 
+		else (p.goodsAllNum-(SELECT sum(goodsAllNum)from ws_in_store where purchaseCode=p.purchaseCode group by purchaseCode))  end as goodsAllNum
+		,p.warehouse,p.storeCode,p.userName,p.remark,s.supplierName 
+		from ws_purchase p 
+		left join ws_supplier s 
+		on p.supplierCode=s.supplierCode 
+		where purchaseCode=#{purchaseCode}
+	</select>
+
+	<select id="selectBystoreCodeAllPurchase" parameterType="Page"
+		resultType="map">
+		select
+		p.purchaseCode,p.goodsTotalPrices,p.goodsAllNum,p.warehouse,p.createTime,s.supplierName
+		from ws_purchase p left join ws_supplier s on
+		p.supplierCode=s.supplierCode where storeCode=#{condition.storeCode}
+		limit #{startRow},#{rows}
+	</select>
+
+	<select id="selectAllCount" resultType="int" parameterType="Condition">
+		select count(1) from ws_purchase where storeCode=#{storeCode}
+	</select>
+
+	<select id="selectGoodsAllNum" resultType="int" parameterType="java.lang.String">
+		select goodsAllNum from ws_purchase where purchaseCode=#{purchaseCode}
+	</select>
+	
+	<update id="updateInStoreState" parameterType="Purchase">
+		update ws_purchase set inStoreState=#{inStoreState} where purchaseCode=#{purchaseCode}
+	</update>
+</mapper>

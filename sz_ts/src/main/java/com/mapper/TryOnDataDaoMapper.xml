@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.TryOnDataDao">
+	<insert id="insertTryOnData" parameterType="tryOnData">
+		INSERT INTO ts_try_on_data(style,storeCode,createTime,equipment) VALUES(#{style},#{storeCode},now(),#{equipment})
+	</insert>
+	
+	<select id="selectData" resultType="map" parameterType="TryOnData">
+		select count(1) as tryOnNum,style from ts_try_on_data 
+		<where>
+			<if test="createTime=='day'.toString()">
+				to_days(createTime) = to_days(now())
+			</if>
+			<if test="createTime=='week'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='month'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 30 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='quarter'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='year'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+			</if>
+			and storeCode=#{storeCode} GROUP BY style
+		</where>
+	</select>
+	
+	<select id="selectTryOnData" resultType="map" parameterType="tryOnData">
+		SELECT COUNT(*) as tryOnNum,s.storeName 
+		from ts_try_on_data d 
+		LEFT JOIN ts_stores s 
+		on d.storeCode=s.storeCode 
+		<where>
+			<if test="createTime=='day'.toString()">
+				to_days(d.createTime) = to_days(now())
+			</if>
+			<if test="createTime=='week'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 7 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+			<if test="createTime=='month'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 30 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+			<if test="createTime=='quarter'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 90 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+			<if test="createTime=='year'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 365 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+			GROUP BY s.storeName
+		</where>
+	</select>
+	
+	<select id="selectByStoreCodeTotalTruOnData" resultType="map" parameterType="tryOnData">
+		SELECT COUNT(*) as tryOnNum,style from 
+		ts_try_on_data 
+		<where>
+			<if test="createTime=='day'.toString()">
+				to_days(createTime) = to_days(now())
+			</if>
+			<if test="createTime=='week'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='month'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 30 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='quarter'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='year'.toString()">
+				DATE_SUB(CURDATE(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+			</if>
+			and storeCode=#{storeCode} GROUP BY style
+		</where>
+	</select>
+	
+	<insert id="batchInsertTryOnDataList" parameterType="java.util.List">
+		insert into ts_try_on_data(storeCode,style,createTime,equipment) 
+		values
+		<foreach collection="tryOnDataList" item="tryOnData" separator=",">
+			(
+				#{tryOnData.storeCode},
+				#{tryOnData.style},
+				#{tryOnData.createTime},
+				#{tryOnData.equipment}
+			)
+		</foreach>
+	</insert>
+	
+	<select id="selectByStoreCodeAndTimeGetDataDay" parameterType="tryOnData" resultType="map">
+		SELECT
+			count(HOUR(createTime)='10' or null ) as '10',
+			count(HOUR(createTime)='12' or null ) as '12',
+			count(HOUR(createTime)='14' or null ) as '14',
+			count(HOUR(createTime)='16' or null ) as '16',
+			count(HOUR(createTime)='18' or null ) as '18',
+			count(HOUR(createTime)='20' or null ) as '20',
+			count(HOUR(createTime)='22' or null ) as '22',
+			count(HOUR(createTime)='24' or null ) as '24'
+			FROM
+			ts_try_on_data
+			<where>
+				<if test="storeCode!=null and storeCode!=''">
+				 storeCode=#{storeCode}
+				</if>
+				and to_days(createTime) = to_days(now()) 
+			</where>
+			
+	 </select>
+	 
+	 <select id="selectByTimeGetTotalStoreTryOnDataGroupByStoreCodeDay"  resultType="map">
+	 		SELECT
+			IFNULL(s.storeName,null) as storeName,
+			count(HOUR(d.createTime)='10' or null ) as '10',
+			count(HOUR(d.createTime)='12' or null ) as '12',
+			count(HOUR(d.createTime)='14' or null ) as '14',
+			count(HOUR(d.createTime)='16' or null ) as '16',
+			count(HOUR(d.createTime)='18' or null ) as '18',
+			count(HOUR(d.createTime)='20' or null ) as '20',
+			count(HOUR(d.createTime)='22' or null ) as '22',
+			count(HOUR(d.createTime)='24' or null ) as '24'
+			FROM
+			ts_try_on_data d LEFT JOIN ts_stores s
+			on d.storeCode=s.storeCode
+			WHERE to_days(d.createTime) = to_days(now()) GROUP BY d.storeCode
+	 </select>
+	 
+	 <select id="selectByStoreCodeAndTimeGetDataWeek" parameterType="tryOnData" resultType="map">
+			select a.weeks,ifnull(b.count,0) as count
+			from (
+			    SELECT DAYNAME(curdate()) as weeks
+			    union all
+			    SELECT DAYNAME(date_sub(now(), interval 1 day)) as weeks
+			    union all
+			    SELECT DAYNAME(date_sub(now(), interval 2 day)) as weeks
+			    union all
+			    SELECT DAYNAME(date_sub(now(), interval 3 day)) as weeks
+			    union all
+			    SELECT DAYNAME(date_sub(now(), interval 4 day)) as weeks
+			    union all
+			    SELECT DAYNAME(date_sub(now(), interval 5 day)) as weeks
+			    union all
+			    SELECT DAYNAME(date_sub(now(), interval 6 day)) as weeks
+			) a left join 
+			(
+			  select createTime as datetime,DATE_FORMAT(createTime,'%W') weeks, count(*) as count
+			  from ts_try_on_data 
+			  <where>
+			  	<if test="createTime=='week'.toString() and storeCode!=null and storeCode!=''">
+					 storeCode=#{storeCode}
+				</if>
+				and DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+			  </where>
+			  group by weeks
+			) b 
+			on a.weeks = b.weeks ORDER BY case a.weeks   when 'Monday' then 1
+														 when 'Tuesday' then 2
+														 when 'Wednesday' then 3
+														 when 'Thursday' then 4
+														 when 'Friday' then 5
+														 when 'Saturday' then 6
+														 when 'Sunday' then 7
+														 end
+	 </select>
+	 
+	 <select id="selectByTimeGetTotalStoreTryOnDataMonth" parameterType="tryOnData" resultType="map">
+			(select count(1) as count
+			from ts_try_on_data 
+			<where>
+				<if test="createTime=='month'.toString() and storeCode!=null and storeCode!=''">
+					storeCode=#{storeCode}
+				</if>
+					and DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+					and DATE_SUB(NOW(),INTERVAL 21 day)>=createTime)
+			</where>
+			union all
+			(select count(1) as count
+			from ts_try_on_data 
+			<where>
+				<if test="createTime=='month'.toString() and storeCode!=null and storeCode!=''">
+					storeCode=#{storeCode}
+				</if>
+					and DATE_SUB(now(), INTERVAL 21 DAY) <![CDATA[<]]>= createTime
+					and DATE_SUB(NOW(),INTERVAL 14 DAY)>=createTime)
+			</where>
+			union all
+			(select count(1) as count
+			from ts_try_on_data 
+			<where>
+				<if test="createTime=='month'.toString() and storeCode!=null and storeCode!=''">
+					storeCode=#{storeCode}
+				</if>
+					and DATE_SUB(now(), INTERVAL 14 DAY) <![CDATA[<]]>= createTime
+					and DATE_SUB(NOW(),INTERVAL 7 DAY)>=createTime)
+			</where>
+			union all
+			(select count(1) as count
+			from ts_try_on_data 
+			<where>
+				<if test="createTime=='month'.toString() and storeCode!=null and storeCode!=''">
+					storeCode=#{storeCode}
+				</if>
+				and DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime)
+			</where>
+	 </select>
+	 
+	 <select id="selectByStoreCodeAndTimeGetDataQuarter" parameterType="tryOnData" resultType="map">
+			(select count(1) as count
+			from ts_try_on_data 
+			<where>
+				<if test="createTime=='quarter'.toString() and storeCode!=null and storeCode!=''">
+					storeCode=#{storeCode}
+				</if>
+					and DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+					and DATE_SUB(NOW(),INTERVAL 60 day)>=createTime )
+			</where>
+			union all
+			(select count(1) as count
+			from ts_try_on_data 
+			<where>
+				<if test="createTime=='quarter'.toString()  and storeCode!=null and storeCode!=''">
+					storeCode=#{storeCode}
+				</if>
+					and DATE_SUB(now(), INTERVAL 60 DAY) <![CDATA[<]]>= createTime
+					and DATE_SUB(NOW(),INTERVAL 30 DAY)>=createTime)
+			</where>
+			union all
+			(select count(1) as count
+			from ts_try_on_data 
+			<where>
+				<if test="createTime=='quarter'.toString()  and storeCode!=null and storeCode!=''">
+					storeCode=#{storeCode}
+				</if>
+					and DATE_SUB(now(), INTERVAL 30 DAY) <![CDATA[<]]>= createTime)
+			</where>
+	 </select>
+	 <select id="selectByStoreCodeAndTimeGetDataYear" parameterType="tryOnData" resultType="map">
+			(select count(1) as count
+			from ts_try_on_data 
+			<where>
+				<if test="createTime=='year'.toString() and storeCode!=null and storeCode!=''">
+					storeCode=#{storeCode}
+				</if>
+					and DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+					and DATE_SUB(NOW(),INTERVAL 273 day)>=createTime )
+			</where>
+			union all
+			(select count(1) as count
+			from ts_try_on_data 
+			<where>
+				<if test="createTime=='year'.toString() and storeCode!=null and storeCode!=''">
+					storeCode=#{storeCode}
+				</if>
+					and DATE_SUB(now(), INTERVAL 273 DAY) <![CDATA[<]]>= createTime
+					and DATE_SUB(NOW(),INTERVAL 182 DAY)>=createTime)
+			</where>
+			union all
+			(select count(1) as count
+			from ts_try_on_data 
+			<where>
+				<if test="createTime=='year'.toString() and storeCode!=null and storeCode!=''">
+					storeCode=#{storeCode}
+				</if>
+					and DATE_SUB(now(), INTERVAL 182 DAY) <![CDATA[<]]>= createTime
+					and DATE_SUB(NOW(),INTERVAL 91 DAY)>=createTime )
+			</where>
+			union all
+			(select count(1) as count
+			from ts_try_on_data 
+			<where>
+				<if test="createTime=='year'.toString() and storeCode!=null and storeCode!=''">
+					storeCode=#{storeCode}
+				</if>
+					and DATE_SUB(now(), INTERVAL 91 DAY) <![CDATA[<]]>= createTime )
+			</where>
+	 </select>
+	 
+	 <select id="selectByTimeAndStoreCodeGettryOnMostStyleAndTryOnLeastStyleData" resultType="java.lang.String" parameterType="TryOnData">
+	 (   select GROUP_CONCAT(c.style separator '/')as tryOnMostStyle from
+	 	(select COUNT(*)as num,style from ts_try_on_data
+			<where>
+				<if test="createTime=='day'.toString()">
+					to_days(createTime) = to_days(now())
+				</if>
+				<if test="createTime=='week'.toString()">
+					DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+				</if>
+				<if test="createTime=='month'.toString()">
+					DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+				</if>
+				<if test="createTime=='quarter'.toString()">
+					DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+				</if>
+				<if test="createTime=='year'.toString()">
+					DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+				</if>
+				<if test="storeCode!=null and storeCode!=''">
+					and storeCode=#{storeCode}
+				</if>
+				  GROUP BY style ORDER BY num DESC
+			</where>
+		 )c where c.num=
+			(select min(d.num) from (
+				select COUNT(*)as num,style from ts_try_on_data 
+				<where>
+					<if test="createTime=='day'.toString()">
+						to_days(createTime) = to_days(now())
+					</if>
+					<if test="createTime=='week'.toString()">
+						DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+					</if>
+					<if test="createTime=='month'.toString()">
+						DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+					</if>
+					<if test="createTime=='quarter'.toString()">
+						DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+					</if>
+					<if test="createTime=='year'.toString()">
+						DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+					</if>
+					and storeCode=#{storeCode}  GROUP BY style ORDER BY num DESC
+				</where>
+				)d)
+	)
+		union all
+		
+	(       
+		select GROUP_CONCAT(b.style separator '/') as tryOnLeastStyle from
+			(
+				select COUNT(*)as num,style from ts_try_on_data 
+					<where>
+						<if test="createTime=='day'.toString()">
+							to_days(createTime) = to_days(now())
+						</if>
+						<if test="createTime=='week'.toString()">
+							DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+						</if>
+						<if test="createTime=='month'.toString()">
+							DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+						</if>
+						<if test="createTime=='quarter'.toString()">
+							DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+						</if>
+						<if test="createTime=='year'.toString()">
+							DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+						</if>
+						and storeCode=#{storeCode} GROUP BY style ORDER BY num DESC
+					</where>
+				 )b 
+		where b.num=(
+			select MAX(a.num) from (
+					select COUNT(*)as num,style from ts_try_on_data
+						<where>
+							<if test="createTime=='day'.toString()">
+								to_days(createTime) = to_days(now())
+							</if>
+							<if test="createTime=='week'.toString()">
+								DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+							</if>
+							<if test="createTime=='month'.toString()">
+								DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+							</if>
+							<if test="createTime=='quarter'.toString()">
+								DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+							</if>
+							<if test="createTime=='year'.toString()">
+								DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+							</if>
+							and storeCode=#{storeCode}  GROUP BY style ORDER BY num DESC
+						</where>
+					  )a)
+	)
+	union all
+	(   select GROUP_CONCAT(c.matchStyle separator '/')as matchMostStyle from
+		 	(select COUNT(*)as num,matchStyle from ts_match_data
+				<where>
+					<if test="createTime=='day'.toString()">
+						to_days(createTime) = to_days(now())
+					</if>
+					<if test="createTime=='week'.toString()">
+						DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+					</if>
+					<if test="createTime=='month'.toString()">
+						DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+					</if>
+					<if test="createTime=='quarter'.toString()">
+						DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+					</if>
+					<if test="createTime=='year'.toString()">
+						DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+					</if>
+					and storeCode=#{storeCode}  GROUP BY matchStyle ORDER BY num DESC
+				</where>
+			 )c where c.num=
+				(select min(d.num) from (
+					select COUNT(*)as num,matchStyle from ts_match_data 
+					<where>
+						<if test="createTime=='day'.toString()">
+							to_days(createTime) = to_days(now())
+						</if>
+						<if test="createTime=='week'.toString()">
+							DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+						</if>
+						<if test="createTime=='month'.toString()">
+							DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+						</if>
+						<if test="createTime=='quarter'.toString()">
+							DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+						</if>
+						<if test="createTime=='year'.toString()">
+							DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+						</if>
+						and storeCode=#{storeCode}  GROUP BY matchStyle ORDER BY num DESC
+					</where>
+					)d)
+		)
+			union all
+			
+		(       
+			select GROUP_CONCAT(b.matchStyle separator '/') as matchLeastStyle from
+				(
+					select COUNT(*)as num,matchStyle from ts_match_data 
+						<where>
+							<if test="createTime=='day'.toString()">
+								to_days(createTime) = to_days(now())
+							</if>
+							<if test="createTime=='week'.toString()">
+								DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+							</if>
+							<if test="createTime=='month'.toString()">
+								DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+							</if>
+							<if test="createTime=='quarter'.toString()">
+								DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+							</if>
+							<if test="createTime=='year'.toString()">
+								DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+							</if>
+							and storeCode=#{storeCode} GROUP BY matchStyle ORDER BY num DESC
+						</where>
+					 )b 
+			where b.num=(
+				select MAX(a.num) from (
+						select COUNT(*)as num,matchStyle from ts_match_data
+							<where>
+								<if test="createTime=='day'.toString()">
+									to_days(createTime) = to_days(now())
+								</if>
+								<if test="createTime=='week'.toString()">
+									DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+								</if>
+								<if test="createTime=='month'.toString()">
+									DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+								</if>
+								<if test="createTime=='quarter'.toString()">
+									DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+								</if>
+								<if test="createTime=='year'.toString()">
+									DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+								</if>
+								and storeCode=#{storeCode}  GROUP BY matchStyle ORDER BY num DESC
+							</where>
+						  )a)
+		)
+		union all
+		(select count(1) from ts_match_data 
+	 		<where>
+	 			<if test="createTime=='day'.toString()">
+					to_days(createTime) = to_days(now())
+				</if>
+				<if test="createTime=='week'.toString()">
+					DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+				</if>
+				<if test="createTime=='month'.toString()">
+					DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+				</if>
+				<if test="createTime=='quarter'.toString()">
+					DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+				</if>
+				<if test="createTime=='year'.toString()">
+					DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+				</if>
+					and storeCode=#{storeCode}
+	 		</where>
+	 	)
+	 	union all
+	 	(select count(1) from ts_try_on_data 
+	 		<where>
+	 			<if test="createTime=='day'.toString()">
+					to_days(createTime) = to_days(now())
+				</if>
+				<if test="createTime=='week'.toString()">
+					DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+				</if>
+				<if test="createTime=='month'.toString()">
+					DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+				</if>
+				<if test="createTime=='quarter'.toString()">
+					DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+				</if>
+				<if test="createTime=='year'.toString()">
+					DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+				</if>
+					and storeCode=#{storeCode}
+	 		</where>
+	 	)
+	 </select>
+	 
+	 <select id="selectByTimeTotalStoreCode" parameterType="tryOnData" resultType="map">
+	 	SELECT d.storeCode,s.storeName from ts_try_on_data d LEFT JOIN ts_stores s on d.storeCode=s.storeCode 
+	 	<where>
+	 		<if test="createTime=='week'.toString()">
+				DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+			<if test="createTime=='month'.toString()">
+				DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+			<if test="createTime=='quarter'.toString()">
+				DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+			<if test="createTime=='year'.toString()">
+				DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= d.createTime
+			</if>
+	 	</where>
+	 	GROUP BY d.storeCode
+	 </select>
+	 
+	 <select id="selectTryData" parameterType="tryOnData" resultType="map">
+	 	select COUNT(1) as tryOnNum from  ts_try_on_data 
+	 	<where>
+	 		<if test="createTime=='day'.toString()">
+				to_days(createTime) = to_days(now())
+			</if>
+	 		<if test="createTime=='week'.toString()">
+				DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='month'.toString()">
+				DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='quarter'.toString()">
+				DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= createTime
+			</if>
+			<if test="createTime=='year'.toString()">
+				DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= createTime
+			</if>
+			and style=#{style} and storeCode=#{storeCode} 
+	 	</where>
+	 </select>
+</mapper>

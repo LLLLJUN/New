@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.StoresDao">
+	
+	<select id="selectAllStore" resultType="map">
+		select storeCode,storeName,StoreTel,storeAddress from ts_stores where isNo=1
+	</select>
+	
+	<select id="selectByStoreCode" parameterType="java.lang.String" resultType="map">
+		select storeCode,storeName,storeTel,storeAddress,storeArea from ts_stores where storeCode=#{storeCode} and isNo=1
+	</select>
+	
+	<insert id="increaseStore" parameterType="stores">
+		insert into ts_stores(storeCode,storeName,storeTel,storeAddress,storeArea,createTime,isNo)
+		values(#{storeCode},#{storeName},#{storeTel},#{storeAddress},#{storeArea},now(),1)
+	</insert>
+	
+	<select id="queryCount" parameterType="condition" resultType="int">
+		select count(1) from ts_stores 
+		<where>
+			<if test="storeCode!=null and storeCode!=''">
+				storeCode=#{storeCode}
+			</if>
+			<if test="storeArea!=null and storeArea!=''"> 
+				and	storeArea like '%${storeArea}%'
+			</if>
+				and isNo=1
+		</where>
+	</select>
+	
+	<select id="pageQueryStores" parameterType="Page" resultType="map">
+		select storeCode,storeName,storeTel,storeAddress,storeArea,createTime from ts_stores 
+		<where>
+			<if test="condition.storeCode !=null and condition.storeCode!=''">
+				storeCode=#{condition.storeCode}
+			</if>
+			<if test="condition.storeArea!=null and condition.storeArea!='' ">
+				and storeArea like '%${condition.storeArea}%'
+			</if>
+				and isNo=1 limit #{startRow},#{rows}
+		</where>
+		
+	</select>
+	
+	<update id="deleteStore" parameterType="java.lang.String">
+		update ts_stores set isNo=0 where storeCode=#{sotreCode}
+	</update>
+	
+	<update id="updateStore" parameterType="stores" >
+		update ts_stores set storeName=#{storeName},storeTel=#{storeTel},storeAddress=#{storeAddress},storeArea=#{storeArea} where storeCode=#{storeCode} and isNo=1
+	</update>
+	
+	<select id="selectStoreNameAndStoreCode" resultType="map">
+		select storeCode,storeName from ts_stores where isNo=1
+	</select>
+</mapper>

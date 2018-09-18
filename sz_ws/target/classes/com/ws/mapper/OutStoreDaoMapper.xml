@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.OutStoreDao">
+
+	<resultMap type="map" id="result">
+		<id property="id" column="id"/>
+		<result property="transferCode" column="transferCode"/>
+		<result property="goodsAllNum" column="goodsAllNum"/>
+		<result property="goodsTotalPrices" column="goodsTotalPrices"/>
+		<result property="outStoreState" column="outStoreState"/>
+		<result property="inStoreState" column="inStoreState"/>
+		<result property="sendStoreCode" column="sendStoreCode"/>
+		<result property="sendStoreName" column="sendStoreName"/>
+		<result property="warehouse" column="warehouse"/>
+		<result property="receiveStoreCode" column="receiveStoreCode"/>
+		<result property="receiveStoreName" column="receiveStoreName"/>
+		<result property="userName" column="userName"/>
+		<result property="remark" column="remark"/>
+		<result property="createTime" column="createTime"/>
+		<association property="goodsInfos" column="relevanceCode" select="selectGoodsTransferDetail"></association>
+	</resultMap>
+	
+	<resultMap type="map" id="resultOutStore">
+		<id property="id" column="id"/>
+		<result column="outStoreCode" property="outStoreCode"/>
+		<result column="goodsAllNum" property="goodsAllNum"/>
+		<result column="goodsTotalPrices" property="goodsTotalPrices"/>
+		<result column="outStoreMode" property="outStoreMode"/>
+		<result column="relevanceCode" property="relevanceCode"/>
+		<result column="warehouse" property="warehouse"/>
+		<result column="storeCode" property="storeCode"/>
+		<result column="userName" property="userName"/>
+		<result column="createTime" property="createTime"/>
+		<result column="outStoreTime" property="outStoreTime"/>
+		<result column="remark" property="remark"/>
+		<association property="goodsInfos" column="outStoreCode" select="selectOutStoreDetail"></association>
+	</resultMap>
+	
+	<insert id="insertOutStore" parameterType="OutStore">
+		insert into ws_out_store(outStoreCode,outStoreMode,relevanceCode,goodsAllNum,goodsTotalPrices,warehouse,storeCode,userName,remark,createTime)
+		values(#{outStoreCode},#{outStoreMode},#{relevanceCode},#{goodsAllNum},#{goodsTotalPrices},#{warehouse},#{storeCode},#{userName},#{remark},now())
+	</insert>
+	
+	<update id="updateGoodsTransfer" parameterType="OutStore">
+		update ws_goods_transfer set outStoreState=#{outStoreState} where transferCode=#{relevanceCode}
+	</update>
+	
+	<select id="selectByTransferCode" parameterType="java.lang.String" resultMap="result">
+		select transferCode as relevanceCode,goodsAllNum,goodsTotalPrices,warehouse,sendStoreCode,userName,remark  from ws_goods_transfer where transferCode=#{transferCode} 
+	</select>
+	
+	<select id="selectGoodsTransferDetail" parameterType="java.lang.String" resultType="map">
+		select d.sku,d.color,d.size,d.purchasePrice,d.transferNum as waitOutStoreNum,g.style,g.name,g.unit 
+		from ws_goods_transfer_detail d 
+		left join ws_goods g on d.sku=g.sku 
+		where transferCode=#{transferCode}
+	</select>
+	
+	<select id="selectNoAllCount" parameterType="Condition" resultType="int">
+		select count(1) from ws_goods_transfer where sendStoreCode=#{storeCode}
+	</select>
+	
+	<select id="selectNoOutStoreList" resultType="map" parameterType="Page">
+		select t.createTime,t.warehouse,t.outStoreState,t.receiveStoreName,t.goodsAllNum,t.transferCode from ws_goods_transfer t where sendStoreCode=#{condition.storeCode} and t.outStoreState <![CDATA[<]]>2 limit #{startRow},#{rows}
+	</select>
+	
+	<select id="selectYesAllCount" parameterType="Condition" resultType="int">
+		select count(1) from ws_goods_transfer where sendStoreCode=#{storeCode} and outStoreState <![CDATA[<]]>2
+	</select>
+	
+	<select id="selectYesOutStoreList" resultType="map" parameterType="Page">
+		select t.createTime,t.warehouse,s.outStoreMode,t.receiveStoreName,t.goodsAllNum,s.outStoreCode from ws_goods_transfer t left join ws_out_store s on t.transferCode =s.relevanceCode where sendStoreCode=#{condition.storeCode} and outStoreState=2 limit #{startRow},#{rows}
+	</select>
+	
+	<select id="selectByOutStoreCode" resultMap="resultOutStore" parameterType="java.lang.String">
+		select outStoreCode,goodsAllNum,goodsTotalPrices,warehouse,storeCode,userName,remark from ws_out_store where outStoreCode=#{outStoreCode}
+	</select>
+	
+	<select id="selectOutStoreDetail" resultType="map" parameterType="java.lang.String">
+		select d.sku,g.name,g.style,d.color,d.size,d.purchasePrice,g.unit,d.outStoreNum 
+		from ws_out_store_detail d 
+		left join ws_goods g on d.sku=g.sku 
+		where outStoreCode=#{outStoreCode}
+	</select>
+</mapper>

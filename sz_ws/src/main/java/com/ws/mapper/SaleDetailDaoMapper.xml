@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.SaleDetailDao">
+	<insert id="insertSaleDetailList" parameterType="java.util.List">
+		insert into ws_sale_detail(sku,size,name,color,style,listPrice,curPrice,saleNum,allPrice,saleBillNo)
+		values
+		<foreach collection="saleDetailList" item="saleDetail" separator=",">
+		(
+			#{saleDetail.sku},
+			#{saleDetail.size},
+			#{saleDetail.name},
+			#{saleDetail.color},
+			#{saleDetail.style},
+			#{saleDetail.listPrice},
+			#{saleDetail.curPrice},
+			#{saleDetail.saleNum},
+			#{saleDetail.allPrice},
+			#{saleDetail.saleBillNo}
+		)
+		</foreach>
+	</insert>
+	
+	<select id="selectBySaleBillNoGetSaleGoodsInfo" parameterType="java.lang.String" resultType="map">
+		select d.sku,d.size,d.name,d.color,d.style,d.listPrice,d.curPrice,d.saleNum,d.allPrice 
+		from ws_sale_detail d
+		where saleBillNo=#{saleBillNo}
+	</select>
+	
+	<select id="getSaleBaseData" parameterType="Sale" resultType="map">
+		select d.style,COUNT(1) as saleNum from ws_sale_detail d , ws_sale s 
+		<where>
+			<if test="storeCode!=null and storeCode!=''">
+				storeCode=#{storeCode}
+			</if>
+			<if test="saleTime=='day'.toString()">
+				and to_days(saleTime) = to_days(now())
+			</if>
+			<if test="saleTime=='week'.toString()">
+				and DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= saleTime
+			</if>
+			<if test="saleTime=='month'.toString()">
+				and DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= saleTime
+			</if>
+			<if test="saleTime=='quarter'.toString()">
+				and DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= saleTime
+			</if>
+			<if test="saleTime=='year'.toString()">
+				and DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= saleTime
+			</if>
+				and s.saleBillNo=d.saleBillNo
+		</where>
+		GROUP BY style ORDER BY saleNum DESC limit 0,10
+	</select>
+	
+	<select id="getSaleWorstData" parameterType="Sale" resultType="map">
+		select d.style,COUNT(1) as saleNum from ws_sale_detail d , ws_sale s 
+		<where>
+			<if test="storeCode!=null and storeCode!=''">
+				storeCode=#{storeCode}
+			</if>
+			<if test="saleTime=='day'.toString()">
+				and to_days(saleTime) = to_days(now())
+			</if>
+			<if test="saleTime=='week'.toString()">
+				and DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= saleTime
+			</if>
+			<if test="saleTime=='month'.toString()">
+				and DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= saleTime
+			</if>
+			<if test="saleTime=='quarter'.toString()">
+				and DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= saleTime
+			</if>
+			<if test="saleTime=='year'.toString()">
+				and DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= saleTime
+			</if>
+				and s.saleBillNo=d.saleBillNo
+		</where>
+		GROUP BY style ORDER BY saleNum asc limit 0,10
+	</select>
+	
+	<select id="getTotalSaleStyle" parameterType="Sale" resultType="java.lang.String">
+		select style from ws_sale_detail d,ws_sale s
+			<where> 
+				s.saleBillNo=d.saleBillNo
+				<if test="saleTime=='day'.toString()">
+					and to_days(saleTime) = to_days(now())
+				</if>
+				<if test="saleTime=='week'.toString()">
+					and DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='month'.toString()">
+					and DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='quarter'.toString()">
+					and DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='year'.toString()">
+					and DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= saleTime
+				</if>
+			</where>
+		GROUP BY style
+	</select>
+	
+	<select id="getSaleBestWorstData" parameterType="Condition" resultType="map">
+		(select b.count ,b.storeName as storeName from (	
+			select COUNT(d.style) as count,st.storeName from ws_sale_detail d,ws_sale s,ws_stores st
+				<where>
+					<if test="saleTime=='day'.toString()">
+						 to_days(saleTime) = to_days(now())
+					</if>
+					<if test="saleTime=='week'.toString()">
+						 DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= saleTime
+					</if>
+					<if test="saleTime=='month'.toString()">
+						 DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= saleTime
+					</if>
+					<if test="saleTime=='quarter'.toString()">
+						 DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= saleTime
+					</if>
+					<if test="saleTime=='year'.toString()">
+						 DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= saleTime
+					</if>
+					and st.storeCode=s.storeCode and d.saleBillNo=s.saleBillNo and d.style=#{style}
+				</where>
+			 GROUP BY s.storeCode
+		)b where b.count=(
+		select MAX(a.count) as max from(
+			select COUNT(d.style) as count from ws_sale_detail d,ws_sale s 
+			<where>
+				<if test="saleTime=='day'.toString()">
+					 to_days(saleTime) = to_days(now())
+				</if>
+				<if test="saleTime=='week'.toString()">
+					 DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='month'.toString()">
+					 DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='quarter'.toString()">
+					 DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='year'.toString()">
+					 DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				and d.saleBillNo=s.saleBillNo and d.style=#{style}
+			</where>
+			 GROUP BY s.storeCode)a)LIMIT 1)
+		union ALL
+		(select b.count,b.storeName as storeName from (	
+			select COUNT(d.style) as count,st.storeName from ws_sale_detail d,ws_sale s,ws_stores st 
+			<where>
+				<if test="saleTime=='day'.toString()">
+					 to_days(saleTime) = to_days(now())
+				</if>
+				<if test="saleTime=='week'.toString()">
+					 DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='month'.toString()">
+					 DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='quarter'.toString()">
+					 DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='year'.toString()">
+					 DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				and st.storeCode=s.storeCode and d.saleBillNo=s.saleBillNo and d.style=#{style} 
+			</where>
+			GROUP BY s.storeCode
+		)b where b.count=(
+		select min(a.count) as min from(
+			select COUNT(d.style) as count from ws_sale_detail d,ws_sale s 
+			<where>
+				<if test="saleTime=='day'.toString()">
+					 to_days(saleTime) = to_days(now())
+				</if>
+				<if test="saleTime=='week'.toString()">
+					 DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='month'.toString()">
+					 DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='quarter'.toString()">
+					 DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				<if test="saleTime=='year'.toString()">
+					 DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= saleTime
+				</if>
+				and d.saleBillNo=s.saleBillNo and d.style=#{style}
+			</where>
+			  GROUP BY s.storeCode)a)LIMIT 1)
+	</select>
+	
+	
+	<select id="getSaleData" parameterType="sale" resultType="map">
+		SELECT d.style,count(*) as saleNum from ws_sale s, ws_sale_detail d 
+		<where>
+			<if test="saleTime=='day'.toString()">
+				 to_days(saleTime) = to_days(now())
+			</if>
+			<if test="saleTime=='week'.toString()">
+				 DATE_SUB(now(), INTERVAL 7 DAY) <![CDATA[<]]>= s.saleTime
+			</if>
+			<if test="saleTime=='month'.toString()">
+				 DATE_SUB(now(), INTERVAL 28 DAY) <![CDATA[<]]>= s.saleTime
+			</if>
+			<if test="saleTime=='quarter'.toString()">
+				 DATE_SUB(now(), INTERVAL 90 DAY) <![CDATA[<]]>= s.saleTime
+			</if>
+			<if test="saleTime=='year'.toString()">
+				 DATE_SUB(now(), INTERVAL 365 DAY) <![CDATA[<]]>= s.saleTime
+			</if>
+			<if test="storeCode!=null and storeCode!=''">
+				and s.storeCode=#{storeCode}
+			</if>
+			and s.saleBillNo=d.saleBillNo  
+		</where>
+		GROUP BY d.style 
+	</select>
+</mapper>

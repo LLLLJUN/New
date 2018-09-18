@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ws.dao.DutyDao">
+	<select id="selectAllUserPermission" resultType="java.lang.String">
+		select userPermission from ws_duty
+	</select>
+	
+	<insert id="insertPermission" parameterType="Duty">
+		insert into ws_duty(userPermission,userDuty) values(#{userPermission},#{userDuty})
+	</insert>
+	
+	<select id="selectByUserCodePermission" parameterType="java.lang.String" resultType="java.lang.String">
+        select userPermission FROM ws_duty WHERE id in (SELECT dutyId FROM ws_role_duty where roleId in
+        (select roleId from ws_users_role where userCode=#{userCode}))
+    </select>
+</mapper>

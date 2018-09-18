@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ws.dao.CheckDao">
+
+	<resultMap type="map" id="result">
+		<id column="id" property="id"/>
+		<result column="checkBillCode" property="checkBillCode"/>
+		<result column="createTime" property="createTime"/>
+		<result column="checkMode" property="checkMode"/>
+		<result column="checkState" property="checkState"/>
+		<result column="planAllNum" property="planAllNum"/>
+		<result column="realAllNum" property="realAllNum"/>
+		<result column="storeCode" property="storeCode"/>
+		<result column="checkMakeMan" property="checkMakeMan"/>
+		<result column="checkMan" property="checkMan"/>
+		<result column="checkTime" property="checkTime"/>
+		<result column="remark" property="remark"/>
+		<association property="goodsInfos" column="checkBillCode" select="selectCheckDetail"></association>
+	</resultMap>
+	
+	<insert id="insertCheck" parameterType="Check">
+		insert into ws_check(
+			checkMode,
+			checkState,
+			planAllNum,
+			storeCode,
+			checkMakeMan,
+			checkBillCode,
+			createTime
+		)
+		values
+		(
+			#{checkMode},
+			#{checkState},
+			#{planAllNum},
+			#{storeCode},
+			#{checkMakeMan},
+			#{checkBillCode},
+			curdate()
+		)
+	</insert>
+	
+	<select id="selectCheckByCheckBillCode" parameterType="java.lang.String" resultMap="result">
+		select checkMan,remark,createTime from ws_check where checkBillCode=#{checkBillCode}
+	</select>
+	
+	<select id="selectCheckDetail" resultType="map" parameterType="java.lang.String">
+		select d.sku,d.size,d.color,d.planNum,d.realNum,g.name,g.style 
+		from ws_check_detail d 
+		left join ws_goods g on d.sku=g.sku
+		where checkBillCode=#{checkBillCode}
+	</select>
+	
+	<select id="selectAllCount" parameterType="Condition" resultType="int">
+		select count(1) from ws_check where storeCode=#{storeCode} and checkState=1
+	</select>
+	
+	<select id="selectCheckList" parameterType="Page" resultType="map">
+		select checkBillCode,planAllNum,realAllNum,checkMode,checkState,createTime from ws_check  where  storeCode=#{condition.storeCode} and checkState=1 order by createTime desc limit #{startRow},#{rows}
+	</select>
+	
+	<select id="selectYesAllCount" parameterType="Condition" resultType="int">
+		select count(1) from ws_check where storeCode=#{storeCode} and checkState=2
+	</select>
+	
+	<select id="selectYesCheckList" parameterType="Page" resultType="map">
+		select checkBillCode,planAllNum,realAllNum,checkMode,checkState,createTime from ws_check  where  storeCode=#{condition.storeCode} and checkState=2 order by createTime desc limit #{startRow},#{rows}
+	</select>
+	
+	<update id="updateCheck" parameterType="Check">
+		update ws_check set checkState=2,checkMan=#{checkMan},remark=#{remark} where checkBillCode=#{checkBillCode}
+	</update>
+	
+</mapper>

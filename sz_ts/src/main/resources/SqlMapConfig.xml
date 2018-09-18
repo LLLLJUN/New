@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration> 
+	<settings>
+		<!--插入允许为空  -->
+		<setting name="jdbcTypeForNull" value="NULL"/>
+		<!--打印日志  -->
+		<setting name="logImpl" value="STDOUT_LOGGING"/>
+		<!--不过滤字段值为null的字段信息  --> 
+		<setting name="callSettersOnNulls" value="true"/>  
+	</settings>
+	<!--给实体类取别名  -->
+	<typeAliases>
+		<package name="com.model"/>
+	</typeAliases>
+	<!--映射文件  -->
+	<mappers>
+		<mapper resource="com/mapper/AdvertisingDaoMapper.xml"/>
+		<mapper resource="com/mapper/AppVersionDaoMapper.xml"/>
+		<mapper resource="com/mapper/EpcStyleDaoMapper.xml"/>
+		<mapper resource="com/mapper/MatchDataDaoMapper.xml"/>
+		<mapper resource="com/mapper/TryOnDataDaoMapper.xml"/>
+		<mapper resource="com/mapper/StoresDaoMapper.xml"/>
+		<mapper resource="com/mapper/ImgManageDaoMapper.xml"/>
+	</mappers>
+</configuration>

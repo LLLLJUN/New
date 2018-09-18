@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration> 
+	
+	<settings>
+		<!--插入允许为空  -->
+		<setting name="jdbcTypeForNull" value="NULL"/>
+		<!--打印日志  -->
+		<setting name="logImpl" value="STDOUT_LOGGING"/>
+		<!--不过滤字段值为null的字段信息  --> 
+		<setting name="callSettersOnNulls" value="true"/> 
+	</settings>
+	<!--给实体类取别名  -->
+	<typeAliases>
+		<package name="com.ws.model"/>
+	</typeAliases>
+	<!--  -->
+	<plugins>
+		<plugin interceptor="com.github.pagehelper.PageHelper">
+	 		<property name="dialect" value="mysql"/>
+	 		<property name="offsetAsPageNum" value="true"/>
+	 		<!-- rowBoundsWithCount设置为true时，使用 RowBounds 分页会进行 count 查询。 -->
+	 		<property name="rowBoundsWithCount" value="true"/>
+	 		<!-- pageSizeZero 为 true， 当 pageSize=0 或者 RowBounds.limit = 0 就会查询出全部的结果 -->
+	 		<property name="pageSizeZero" value="true"/>
+	 		<!-- reasonable 为 true，这时如果 pageNum<=0 会查询第一页，如果 pageNum>总页数 会查询最后一页 -->
+	 		<property name="reasonable" value="true"/>
+ 	 		<property name="returnPageInfo" value="check"/>
+	 	</plugin>
+	</plugins>
+	
+	<!--映射文件  -->
+	<mappers>
+		<mapper resource="com/ws/mapper/UsersDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/AppVersionDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/GoodsDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/SupplierDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/PurchaseDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/PurchaseDetailDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/StorageDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/InStoreDaoMapper.xml"/>	
+		<mapper resource="com/ws/mapper/InStoreDetailDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/CheckDaoMapper.xml"/>	
+		<mapper resource="com/ws/mapper/CheckDetailDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/GoodsTransferDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/GoodsTransferDetailDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/OutStoreDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/OutStoreDetailDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/DutyDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/RoleDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/SizeDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/ColorDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/SaleDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/SaleDetailDaoMapper.xml"/>
+		<mapper resource="com/ws/mapper/StoresDaoDaoMapper.xml"/>
+	</mappers>
+</configuration>

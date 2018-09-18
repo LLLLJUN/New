@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ws.dao.GoodsDao">
+
+	<select id="selectBySku" parameterType="java.lang.String" resultType="int">
+		select count(1) from ws_goods where sku=#{sku} 
+	</select>
+	<insert id="insertGoods" parameterType="Goods" >
+		insert into ws_goods(name,sku,style,purchasePrice,listPrice,curPrice,colors,sizes,unit,upperLimitNum,createTime,lowerLimitNum) 
+			   VALUES(#{name},#{sku},#{style},#{purchasePrice},#{listPrice},#{curPrice},#{colors},#{sizes},#{unit},#{upperLimitNum},now(),#{lowerLimitNum})
+	</insert>
+	
+	<delete id="deleteGoodsBySku" parameterType="java.lang.String">
+		delete from ws_goods where sku=#{sku}
+	</delete>
+	
+	<update id="updateGoods" parameterType="Goods">
+		update ws_goods set name=#{name},sku=#{sku},purchasePrice=#{purchasePrice},listPrice=#{listPrice},style=#{style},
+		curPrice=#{curPrice},colors=#{colors},sizes=#{sizes},unit=#{unit},upperLimitNum=#{upperLimitNum},lowerLimitNum=#{lowerLimitNum} where sku=#{sku}
+	</update>
+	
+	<select id="selectAllCount" resultType="int">
+		select count(*) from ws_goods 
+	</select>
+	
+	<select id="Goodspage" parameterType="Page" resultType="map">
+		select name,sku,style,purchasePrice,listPrice,curPrice from ws_goods limit #{startRow},#{rows}
+	</select>
+	
+	<select id="selectGoodsBySku" parameterType="java.lang.String" resultType="map">
+		select name,sku,style,purchasePrice,listPrice,curPrice,colors,sizes,unit,upperLimitNum,lowerLimitNum from ws_goods where sku=#{sku}
+	</select>
+	
+	<select id="selectAllGoods" resultType="map">
+		select sku,name,style,purchasePrice,listPrice,curPrice,colors,sizes,unit,upperLimitNum,lowerLimitNum from ws_goods
+	</select>
+</mapper>
+
+
