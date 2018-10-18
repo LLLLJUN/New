@@ -20,7 +20,7 @@ import com.ws.service.SaleWebServiceProxy;
 
 @Service
 public class SaleDataServiceImpl implements SaleDataService {
-	//添加作者
+	
 	@Autowired
 	private TryOnDataDao tryOnDataDao;
 
