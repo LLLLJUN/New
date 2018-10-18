@@ -20,7 +20,7 @@ import com.ws.service.SaleWebServiceProxy;
 
 @Service
 public class SaleDataServiceImpl implements SaleDataService {
-	
+	//添加警告
 	@Autowired
 	private TryOnDataDao tryOnDataDao;
 
