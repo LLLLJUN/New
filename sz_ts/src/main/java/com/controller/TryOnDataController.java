@@ -29,7 +29,7 @@ import net.sf.json.JSONObject;
 @Api(value="试穿数据接口")
 @Controller
 public class TryOnDataController {
-	
+	//这是试穿数据接口
 	@Resource
 	private TryOnDataService tryOnDataService;
 	
